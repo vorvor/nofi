@@ -1,0 +1,366 @@
+<?php
+
+function motor_menu() {
+  $items = array();
+  
+  $items['cpanel'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_cpanel',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['transport_delete'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_transport_delete',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['transport_save'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_transport_save',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['start_amount_save'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_start_amount_save',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['report_save'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_report_save',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['refresh_row'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_refresh_row',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['refresh_startamount'] = array(
+    'title' => 'Example Page',
+    'page callback' => 'motor_refresh_startamount',
+    'access arguments' => 'access content',
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+function motor_cpanel() {
+  $mid = $_GET['mid'];
+  $pid = $_GET['pid'];
+  $start_amount = get_start_amount($mid, $pid);
+  print '<div id="cpanel-close"></div>';
+  
+  if ($start_amount == 0) {
+    print '<div class="cpanel-subpanel">';
+    print '<label>start amount</label>';
+    print '<input type="text" class="start-amount">';
+    print '<div id="start-amount-submit"></div>';
+    print '</div>';
+  }
+  
+  if ($start_amount != 0) {  
+    print '<div class="cpanel-subpanel">';
+  
+  
+    print '<label>transport</label>';
+    print '<input type="text" class="transport-amount">';
+    print '<select class="destination">';
+    $markets = node_load_multiple(array(), array('type' => 'market'));
+    foreach($markets as $market) {
+      if ($market->nid !== $mid) {
+        print '<option value="' . $market->nid . '">' . $market->title . '</option>';
+      }
+    }
+    print '</select>';
+    print '<div id="transport-submit"></div></div>';
+  
+    print '<div class="cpanel-subpanel">';
+    print '<label>report</label>';
+    print '<input type="text" class="report-amount">';
+    print '<div id="report-submit"></div>';
+    print '</div>';
+  }
+
+}
+
+function motor_transport_save() {
+  $node = new stdClass();
+  $node->nid = NULL;
+
+  // Insert new data:
+  $node->type = 'transport';
+  node_object_prepare($node);
+  $node->uid = 1;
+  
+  $node->title = 'test';
+  
+  $node->field_from['und'][0]['nid'] = $_GET['from'];
+  $node->field_to['und'][0]['nid'] = $_GET['to'];
+  $node->field_product['und'][0]['nid'] = $_GET['pid'];
+  $node->field_amount['und'][0]['value'] = $_GET['amount'];
+  $node->language = 'und';
+
+  $node->created = time();
+
+  node_save($node);
+  
+  return '1';
+}
+
+function motor_transport_delete() {
+    
+}
+
+function motor_start_amount_save() {
+  $node = new stdClass();
+  $node->nid = NULL;
+
+  // Insert new data:
+  $node->type = 'transport';
+  node_object_prepare($node);
+  $node->uid = 1;
+  
+  $node->title = 'test';
+  
+  $node->field_from['und'][0]['nid'] = 8;
+  $node->field_to['und'][0]['nid'] = $_GET['to'];
+  $node->field_product['und'][0]['nid'] = $_GET['pid'];
+  $node->field_amount['und'][0]['value'] = $_GET['amount'];
+  $node->language = 'und';
+
+  $node->created = time();
+
+  node_save($node);
+  
+  return '1';
+}
+
+function motor_report_save() {
+  $node = new stdClass();
+  $node->nid = NULL;
+
+  // Insert new data:
+  $node->type = 'report';
+  node_object_prepare($node);
+  $node->uid = 1;
+  
+  $node->title = 'test';
+  
+  $node->field_market['und'][0]['nid'] = $_GET['market'];
+  $node->field_product['und'][0]['nid'] = $_GET['pid'];
+  $node->field_amount['und'][0]['value'] = $_GET['amount'];
+  $node->language = 'und';
+
+  $node->created = time();
+
+  node_save($node);
+  
+  return '1';
+}
+
+function motor_refresh_row($mid, $pid) {
+  print get_reports($_GET['mid'], $_GET['pid']);
+}
+
+function motor_refresh_startamount($mid, $pid) {
+  print get_start_amount($_GET['mid'], $_GET['pid']);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function get_start_amount($market, $product) {
+  $result = db_query('SELECT * FROM node n
+                      JOIN field_data_field_amount a ON a.entity_id = n.nid
+                      JOIN field_data_field_from f ON f.entity_id = n.nid
+                      JOIN field_data_field_to t ON t.entity_id = n.nid
+                      JOIN field_data_field_product p ON p.entity_id = n.nid
+                      WHERE n.type = :type
+                      AND f.field_from_nid = :from
+                      AND t.field_to_nid = :to
+                      AND p.field_product_nid = :product',
+                      array(':type' => 'transport',
+                            ':from' => 8,
+                            ':to' => $market,
+                            ':product' => $product))->fetchObject();
+  
+  return (is_object($result)) ? $result->field_amount_value : 0;
+}
+
+function get_transports($market, $product, $report) {
+  
+  $nextreport = get_next_report($market, $product, $report);
+  
+  
+  $query = db_query('SELECT * FROM node n
+                      JOIN field_data_field_amount a ON a.entity_id = n.nid
+                      JOIN field_data_field_product p ON p.entity_id = n.nid
+                      JOIN field_data_field_to t ON t.entity_id = n.nid
+                      JOIN field_data_field_from f ON f.entity_id = n.nid
+                      WHERE n.type = :type
+                      AND p.field_product_nid = :product
+                      AND t.field_to_nid = :market
+                      AND n.nid > :nid
+                      AND n.nid < :nextnid
+                      ORDER BY nid ASC',
+                      array(':type' => 'transport',
+                            ':market' => $market,
+                            ':product' => $product,
+                            ':nid' => $report,
+                            ':nextnid' => $nextreport));
+  
+  $transports = '';
+  $sum = 0;
+  foreach ($query as $result) {
+    
+    $transports.= '<div data-transport="' . $result->nid . '" class="one-transport">' . $result->title . ':' . $result->field_amount_value . ':' . $result->nid . '</div>';
+    $sum+= $result->field_amount_value;
+  }
+  
+  $tr = array();
+  $tr['html'] = $transports;
+  $tr['sum'] = $sum;
+      
+  return $tr;
+}
+
+function get_transports_from($market, $product, $report) {
+  
+  $nextreport = get_next_report($market, $product, $report);
+  
+  
+  $query = db_query('SELECT * FROM node n
+                      JOIN field_data_field_amount a ON a.entity_id = n.nid
+                      JOIN field_data_field_product p ON p.entity_id = n.nid
+                      JOIN field_data_field_to t ON t.entity_id = n.nid
+                      JOIN field_data_field_from f ON f.entity_id = n.nid
+                      WHERE n.type = :type
+                      AND p.field_product_nid = :product
+                      AND f.field_from_nid = :market
+                      AND n.nid > :nid
+                      AND n.nid < :nextnid
+                      ORDER BY nid ASC',
+                      array(':type' => 'transport',
+                            ':market' => $market,
+                            ':product' => $product,
+                            ':nid' => $report,
+                            ':nextnid' => $nextreport));
+  
+  $transports = '';
+  $sum = 0;
+  foreach ($query as $result) {
+    
+    $transports.= '<div data-transport="' . $result->nid . '" class="one-transport">' . $result->title . ':' . $result->field_amount_value . ':' . $result->nid . '</div>';
+    $sum+= $result->field_amount_value;
+  }
+  
+  $tr = array();
+  $tr['html'] = $transports;
+  $tr['sum'] = $sum;
+      
+  return $tr;
+}
+
+function get_next_report($market, $product, $nid) {
+  $query = db_query('SELECT * FROM node n
+                  JOIN field_data_field_market m ON m.entity_id = n.nid
+                  JOIN field_data_field_product p ON p.entity_id = n.nid
+                  WHERE n.type = :type
+                  AND m.field_market_nid = :market
+                  AND p.field_product_nid = :product
+                  AND n.nid > :nid
+                  ORDER BY nid ASC',
+                  array(':type' => 'report',
+                        ':market' => $market,
+                        ':product' => $product,
+                        ':nid' => $nid))->fetchObject();
+  return is_object($query) ? $query->nid : 1000000;
+}
+
+function get_reports($market, $product) {
+  $tpl = file_get_contents(drupal_get_path('theme', 'nofi') . '/templates/data-row.tpl.php');
+  $query = db_query('SELECT * FROM node n
+                      JOIN field_data_field_amount a ON a.entity_id = n.nid
+                      JOIN field_data_field_market m ON m.entity_id = n.nid
+                      JOIN field_data_field_product p ON p.entity_id = n.nid
+                      WHERE n.type = :type
+                      AND m.field_market_nid = :market
+                      AND p.field_product_nid = :product
+                      ORDER BY nid ASC',
+                      array(':type' => 'report',
+                            ':market' => $market,
+                            ':product' => $product));
+  
+  $dout = '';
+  foreach ($query as $result) {
+    $results[] = $result;
+  }
+  
+  
+  $start_amount = get_start_amount($market, $product);
+  $sum = $start_amount;
+  if (isset($results) && is_array($results)) {
+    
+    for ($c = 0; $c < count($results); $c++) {
+      $result = $results[$c];
+      $dtpl = $tpl;
+      
+
+      
+      
+      
+      
+      $dtpl = str_replace('{report}', $result->field_amount_value, $dtpl);
+      
+      
+      $transports = get_transports($market, $product, $result->nid);
+      $sum = $sum - $result->field_amount_value;
+      $sum = $sum + $transports['sum'];
+      
+      $transports_from = get_transports_from($market, $product, $result->nid);
+      $sum = $sum - $transports_from['sum'];
+      
+      $dtpl = str_replace('{state}',  (int)($sum / $start_amount * 100) . '%', $dtpl);        
+      $dtpl = str_replace('{amount}',  $sum, $dtpl);
+      $dtpl = str_replace('{transports}',  $transports['html'] .  $transports_from['html'], $dtpl);
+      $dtpl = str_replace('{order}', $c, $dtpl);
+      
+      $dout.= $dtpl;
+    }
+    return $dout;
+  } else {
+    $dtpl = $tpl;
+    $dtpl = str_replace('{report}', '-', $dtpl);
+    $dtpl = str_replace('{state}',  '-', $dtpl);        
+    $dtpl = str_replace('{amount}', '-', $dtpl);
+    $dtpl = str_replace('{transports}', '-', $dtpl);
+    $dtpl = str_replace('{order}', 0, $dtpl);
+    return $dtpl;
+  }
+}
