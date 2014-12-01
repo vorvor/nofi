@@ -3,7 +3,7 @@
 function motor_menu() {
   $items = array();
   
-  $items['cpanel'] = array(
+  $items['mycpanel'] = array(
     'title' => 'Example Page',
     'page callback' => 'motor_cpanel',
     'access arguments' => array('access content'),
@@ -58,7 +58,10 @@ function motor_menu() {
 function motor_cpanel() {
   $mid = $_GET['mid'];
   $pid = $_GET['pid'];
+  $thismarket = node_load($mid);
+  $isthiscarrier = count($thismarket->field_carrier);
   $start_amount = get_start_amount($mid, $pid);
+  
   print '<div id="cpanel-close"></div>';
   
   if ($start_amount == 0) {
@@ -78,12 +81,19 @@ function motor_cpanel() {
     print '<select class="destination">';
     $markets = node_load_multiple(array(), array('type' => 'market'));
     foreach($markets as $market) {
-      if ($market->nid !== $mid) {
-        print '<option value="' . $market->nid . '">' . $market->title . '</option>';
+      if ($isthiscarrier == 0) {
+        if ($market->nid !== $mid && count($market->field_carrier) > 0 && $market->field_carrier['und'][0]['value'] == 1) {
+          print '<option value="' . $market->nid . '">' . $market->title . '(' . $market->field_address['und'][0]['value'] . ')' . '</option>';
+        }
+      } else {
+         if ($market->nid !== $mid && count($market->field_carrier) == 0) {
+          print '<option value="' . $market->nid . '">' . $market->title . '(' . $market->field_address['und'][0]['value'] . ')' . '</option>';
+        }       
       }
+      
     }
     print '</select>';
-    print '<div id="transport-submit"></div></div>';
+    print '<div id="transport-submit"></div><div id="amount-check">?</div></div>';
   
     print '<div class="cpanel-subpanel">';
     print '<label>report</label>';
@@ -119,7 +129,8 @@ function motor_transport_save() {
 }
 
 function motor_transport_delete() {
-    
+    $trid = $_GET['trid'];
+    db_query('DELETE FROM {node} WHERE nid = :nid', array(':nid' => $trid));
 }
 
 function motor_start_amount_save() {
@@ -275,8 +286,8 @@ function get_transports_from($market, $product, $report) {
   $transports = '';
   $sum = 0;
   foreach ($query as $result) {
-    
-    $transports.= '<div data-transport="' . $result->nid . '" class="one-transport">' . $result->title . ':' . $result->field_amount_value . ':' . $result->nid . '</div>';
+    dpm($result);
+    $transports.= '<div data-transport="' . $result->nid . '" data-from="' . $result->field_from_nid . '" data-to="' . $result->field_to_nid .'" data-product="' . $result->field_product_nid .  '" class="one-transport">' . $result->title . ':' . $result->field_amount_value . ':' . $result->nid . '</div>';
     $sum+= $result->field_amount_value;
   }
   

@@ -28,6 +28,25 @@ Drupal.behaviors.my_custom_behavior = {
       }
     }
     
+
+    if ($.cookie('sort')) {
+        
+      
+      sort = $.cookie('sort').split(',');
+      var myArray = $('.market-wrapper');
+      $('#markets').html();
+
+      for (var i = 0; i < sort.length; i++) {
+        $('#markets').append($('#' + sort[i]));
+        
+      }
+      
+            
+      
+    }
+    
+    
+    
     function saveCloses() {
     mdata = '';
     $('.market-wrapper').each(function() {
@@ -52,7 +71,7 @@ Drupal.behaviors.my_custom_behavior = {
       var pid = $(this).parent().attr('data-pid');
       var mid = $(this).parent().parent().attr('data-mid');
       $.ajax({
-        url: '/cpanel',
+        url: '/mycpanel',
         data: {mid: mid, pid: pid},
         type: 'get',
         success: function(data) {
@@ -65,39 +84,53 @@ Drupal.behaviors.my_custom_behavior = {
             from = $(this).closest('.market').attr('data-mid')
             pid = $(this).closest('.product').attr('data-pid');
             to = $(this).prev().val();
+            
+            lamount = $('.prow-' + from + '-' + pid + ' .amount-in:last .amount').html();
+            
+            
             amount = $('.transport-amount').val();
-            $('#preloader').show();
-            $(this).parent().parent().hide();
-            $(this).parent().parent().html('');
-            $('.prow-' + from + '-' + pid +' .product-data').remove();
-            $('.prow-' + to + '-' + pid +' .product-data').remove();
-            console.log('.prow-' + from + '-' + pid);
-            $.ajax({
-                url: '/transport_save',
-                data: {from: from, pid: pid, to: to, amount: amount},
-                type: 'get',
-                success: function(data) {
-                  $.ajax({
-                    url: '/refresh_row',
-                    data: {mid: from, pid: pid},
-                    type: 'get',
-                    success: function(data) {
-                      $('.prow-' + from + '-' + pid).append(data);
-                    }
-                  })
-                  
-                  $.ajax({
-                    url: '/refresh_row',
-                    data: {mid: to, pid: pid},
-                    type: 'get',
-                    success: function(data) {
-                      $('.prow-' + to + '-' + pid).append(data);
-                      $('#preloader').hide();
-                    }
-                  })
-                }
-              })
+            
+            if (amount *1 > lamount * 1) {
+              alert('Nincs ennyi raktáron ' + lamount);
+             
+            } else {
+            
+              $('#preloader').show();
+              $(this).parent().parent().hide();
+              $(this).parent().parent().html('');
+              $('.prow-' + from + '-' + pid +' .product-data').remove();
+              $('.prow-' + to + '-' + pid +' .product-data').remove();
+              
+              
+              
+              $.ajax({
+                  url: '/transport_save',
+                  data: {from: from, pid: pid, to: to, amount: amount},
+                  type: 'get',
+                  success: function(data) {
+                    $.ajax({
+                      url: '/refresh_row',
+                      data: {mid: from, pid: pid},
+                      type: 'get',
+                      success: function(data) {
+                        $('.prow-' + from + '-' + pid).append(data);
+                      }
+                    })
+                    
+                    $.ajax({
+                      url: '/refresh_row',
+                      data: {mid: to, pid: pid},
+                      type: 'get',
+                      success: function(data) {
+                        $('.prow-' + to + '-' + pid).append(data);
+                        $('#preloader').hide();
+                      }
+                    })
+                  }
+                })
+            }
           }).css('cursor','pointer');
+          
           
           $('#start-amount-submit').click(function() {
             to = $(this).closest('.market').attr('data-mid')
@@ -154,6 +187,14 @@ Drupal.behaviors.my_custom_behavior = {
                 }
               })
           }).css('cursor','pointer');
+          
+          $('#amount-check').click(function() {
+            mid = $(this).parent().parent().attr('data-market');
+            pid = $(this).parent().parent().attr('data-product');
+            lamount = $('.prow-' + mid + '-' + pid + ' .amount-in:last .amount').html();
+            alert(lamount);
+            
+          }).css('cursor','pointer');
         }
         })
       $('.cpanel').next().hide();
@@ -162,7 +203,13 @@ Drupal.behaviors.my_custom_behavior = {
     })
     
     $('#markets').sortable({
-        handle: ".drag-n-drop"
+        handle: ".drag-n-drop",
+        update: function() {
+          $.cookie('sort', $('#markets').sortable('toArray').toString(), {path: '/'});  
+
+         
+          
+        }
       });
     
     $('.market-name').click(function() {
@@ -176,15 +223,60 @@ Drupal.behaviors.my_custom_behavior = {
       $('.cpanel').next().hide();
     })
     
-    $('.one-transport').click(function() {
+    $('.one-transport').live('click', function() {
       
       pos = $(this).offset();
-      $('#message').css('left', pos.left + $(this).width() + 'px').css('top', pos.top + 'px').show().attr('data-transport', $(this).attr('data-transport'));
+      $('#message').css('left', pos.left + $(this).width() + 'px')
+      .css('top', pos.top + 'px')
+      .show()
+      .attr('data-transport', $(this).attr('data-transport'))
+      .attr('data-from', $(this).attr('data-from'))
+      .attr('data-to', $(this).attr('data-to'))
+      .attr('data-product', $(this).attr('data-product'));
       
     })
     
     $('#delete-no').click(function() {
       $(this).parent().hide();
+    })
+    
+    $('#delete-yes').click(function() {
+      trid = $(this).parent().attr('data-transport');
+      from = $(this).parent().attr('data-from');
+      to = $(this).parent().attr('data-to');
+      product = $(this).parent().attr('data-product');
+      
+      $('.prow-' + from + '-' + product +' .product-data').remove();
+      
+      $('.prow-' + to + '-' + product +' .product-data').remove();
+      
+      $(this).parent().hide();
+      
+      $.ajax({
+        url: '/transport_delete',
+        data: {trid: trid},
+        type: 'get',
+        success: function(data) {
+          $.ajax({
+            url: '/refresh_row',
+            data: {mid: from, pid: product},
+            type: 'get',
+            success: function(data) {
+              $('.prow-' + from + '-' + product).append(data);
+              $('#preloader').hide();
+            }
+          })
+          $.ajax({
+            url: '/refresh_row',
+            data: {mid: to, pid: product},
+            type: 'get',
+            success: function(data) {
+              $('.prow-' + to + '-' + product).append(data);
+              $('#preloader').hide();
+            }
+          })
+        }
+      }) 
     })
     
     $('.colclose').live('click', function() {

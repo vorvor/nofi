@@ -95,6 +95,7 @@ width: 10000px;
   width: 10000px;
   
   font-weight: bold;
+  cursor: ns-resize;;
 
   
   
@@ -114,17 +115,13 @@ width: 10000px;
     -moz-border-radius-bottomleft: 4px;
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
+    cursor: move;
 }
 
-.market-wrapper.odd .market-name,
-.market-wrapper.odd .drag-n-drop {
-    background: #668000;
-}
+
 
 .market-name,
-.drag-n-drop,
-.market-wrapper.odd .market-name,
-.market-wrapper.odd .drag-n-drop {
+.drag-n-drop {
 background: #f2f6f8;
 background: -moz-linear-gradient(top,  #f2f6f8 0%, #d8e1e7 50%, #b5c6d0 51%, #e0eff9 100%);
 background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#f2f6f8), color-stop(50%,#d8e1e7), color-stop(51%,#b5c6d0), color-stop(100%,#e0eff9));
@@ -137,6 +134,25 @@ filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f2f6f8', end
 -moz-box-shadow:    0px 5px 5px 0px rgba(50, 50, 50, 0.75);
 box-shadow:         0px 5px 5px 0px rgba(50, 50, 50, 0.75);
  
+}
+
+.iscarrier-1 .market-name,
+.iscarrier-1 .drag-n-drop {
+  background: rgb(230,240,163);
+background: -moz-linear-gradient(top,  rgba(230,240,163,1) 0%, rgba(210,230,56,1) 50%, rgba(195,216,37,1) 51%, rgba(219,240,67,1) 100%);
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(230,240,163,1)), color-stop(50%,rgba(210,230,56,1)), color-stop(51%,rgba(195,216,37,1)), color-stop(100%,rgba(219,240,67,1)));
+background: -webkit-linear-gradient(top,  rgba(230,240,163,1) 0%,rgba(210,230,56,1) 50%,rgba(195,216,37,1) 51%,rgba(219,240,67,1) 100%);
+background: -o-linear-gradient(top,  rgba(230,240,163,1) 0%,rgba(210,230,56,1) 50%,rgba(195,216,37,1) 51%,rgba(219,240,67,1) 100%);
+background: -ms-linear-gradient(top,  rgba(230,240,163,1) 0%,rgba(210,230,56,1) 50%,rgba(195,216,37,1) 51%,rgba(219,240,67,1) 100%);
+background: linear-gradient(to bottom,  rgba(230,240,163,1) 0%,rgba(210,230,56,1) 50%,rgba(195,216,37,1) 51%,rgba(219,240,67,1) 100%);
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e6f0a3', endColorstr='#dbf043',GradientType=0 );
+
+}
+
+.iscarrier-1 .market-name::after {
+  content: "\f1b9";
+      font-family: "FontAwesome";
+      padding-left:10px;
 }
 
 .drag-n-drop::before {
@@ -256,6 +272,12 @@ border-radius: 4px;
     content: "\f0a9";
     font-family: "FontAwesome";
     color: #fff;
+}
+.product .cpanel-wrapper #amount-check::before {
+  content: "\f059";
+  font-family: "FontAwesome";
+  color: #fff;
+  float:left;
 }
 
 .product-id::before {
@@ -389,6 +411,11 @@ border-radius: 4px;
   height: 100%;
   background: rgba(0,0,0,0.6);
   text-align: center;
-  padding-top:45%;
+  padding-top:15%;
   display: none;
+}
+
+#delete-yes,
+#delete-no {
+  cursor: pointer;
 }
